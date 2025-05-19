@@ -1,0 +1,54 @@
+{
+    "manifest_version": 3,
+    "name": "Gemini 翻訳拡張機能 (仮)",
+    "version": "1.0",
+    "description": "選択したテキストをGemini APIで翻訳します。",
+    "options_page": "options.html",
+    "permissions": [
+        "activeTab",
+        "scripting",
+        "storage"
+    ],
+    "host_permissions": [
+        "https://generativelanguage.googleapis.com/"
+    ],
+    "background": {
+        "service_worker": "dist/background_bundle.js",
+        "type": "module"
+    },
+    "content_security_policy": {
+        "extension_pages": "script-src 'self'; object-src 'self';"
+    },
+    "content_scripts": [
+        {
+            "matches": [
+                "<all_urls>"
+            ],
+            "js": [
+                "content.js"
+            ]
+        }
+    ],
+    "commands": {
+        "translate_selection": {
+            "suggested_key": {
+                "default": "Ctrl+N",
+                "mac": "Ctrl+N"
+            },
+            "description": "選択したテキストを翻訳します。"
+        }
+    },
+    "action": {
+        "default_popup": "popup.html",
+        "default_icon": {
+            "16": "icons/icon16.png",
+            "48": "icons/icon48.png",
+            "128": "icons/icon128.png"
+        }
+    },
+    "icons": {
+        "16": "icons/icon16.png",
+        "48": "icons/icon48.png",
+        "128": "icons/icon128.png"
+    }
+}

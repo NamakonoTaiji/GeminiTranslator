@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Gemini 翻訳 ポップアップ</title>
+    <style>
+      body {
+        font-family: sans-serif;
+        width: 250px; /* ポップアップの幅を適度に設定 */
+        padding: 10px;
+        font-size: 14px;
+      }
+      h3 {
+        margin-top: 0;
+        margin-bottom: 10px;
+        color: #333;
+      }
+      p {
+        margin-bottom: 15px;
+        color: #555;
+      }
+      button {
+        width: 100%;
+        padding: 8px;
+        margin-bottom: 10px;
+        background-color: #4caf50;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+      }
+      button:hover {
+        background-color: #45a049;
+      }
+      select {
+        width: 100%;
+        padding: 6px;
+        margin-bottom: 10px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        box-sizing: border-box;
+      }
+      label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: bold;
+      }
+      hr {
+        border: 0;
+        height: 1px;
+        background: #ddd;
+        margin: 15px 0;
+      }
+      a {
+        color: #007bff;
+        text-decoration: none;
+        display: block;
+        text-align: center;
+      }
+      a:hover {
+        text-decoration: underline;
+      }
+      .status-message {
+        font-size: 12px;
+        color: green;
+        text-align: center;
+        height: 15px; /* メッセージ表示領域を確保 */
+        margin-top: 5px;
+      }
+    </style>
+  </head>
+  <body>
+    <h3>Gemini 翻訳</h3>
+    <p>ページ上でテキストを選択し、下のボタンを押して翻訳します。</p>
+
+    <button id="translateManuallyButton">選択範囲を翻訳</button>
+
+    <hr />
+
+    <label for="targetLangPopup">翻訳先の言語:</label>
+    <select id="targetLangPopup">
+      <option value="ja">日本語 (Japanese)</option>
+      <option value="en">英語 (English)</option>
+      <option value="ko">韓国語 (Korean)</option>
+      <option value="zh-CN">中国語 (簡体字 Chinese Simplified)</option>
+      <option value="zh-TW">中国語 (繁体字 Chinese Traditional)</option>
+      <option value="fr">フランス語 (French)</option>
+      <option value="de">ドイツ語 (German)</option>
+      <option value="es">スペイン語 (Spanish)</option>
+    </select>
+    <div id="langStatus" class="status-message"></div>
+
+    <hr />
+
+    <a href="#" id="openOptionsPage">オプションを開く</a>
+
+    <script src="popup.js"></script>
+  </body>
+</html>
