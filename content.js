@@ -183,7 +183,7 @@ function handleTranslationResponse(
 chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
   if (request.action === "getSelectionAndTranslate") {
     const selectedText = window.getSelection().toString().trim();
-    if (selectedText.length > 0) {
+    if (selectedText.length > 1) {
       lastSelectedText = selectedText; // 選択テキストを更新
       console.log(
         "指示によるテキスト選択:",

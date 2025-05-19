@@ -2,7 +2,8 @@
 const path = require("path");
 
 module.exports = {
-  mode: "production", // 'development' にするとデバッグしやすくなります
+  mode: "development", // 'development' にするとデバッグしやすくなります
+  devtool: "inline-source-map",
   entry: "./background.js", // あなたの元の background.js ファイルのパス
   output: {
     path: path.resolve(__dirname, "dist"), // バンドル後のファイルの出力先ディレクトリ
