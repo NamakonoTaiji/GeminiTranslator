@@ -5,9 +5,7 @@ import {
   HarmBlockThreshold,
 } from "@google/generative-ai";
 
-// --- デバッグ用の詳細ログ設定 ---
-// 詳細なログを見る必要がなくなったら、以下のフラグを false にしてください。
-const DETAILED_LOGGING_ENABLED = true;
+const DETAILED_LOGGING_ENABLED = true; // デバッグ用ログフラグ
 
 function detailedLog(...args) {
   if (DETAILED_LOGGING_ENABLED) {
@@ -17,48 +15,48 @@ function detailedLog(...args) {
 
 detailedLog("Service Worker 起動 (または再起動)");
 
-// --- メインのメッセージリスナー (コンテンツスクリプトからのリクエストを処理) ---
 chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
   detailedLog("'onMessage' リスナー受信:", request);
-
   if (request.action === "translate") {
     detailedLog("'translate' アクション処理開始");
     handleTranslateRequest(request, sender, sendResponse);
-    return true; // 非同期処理のため true を返す
+    return true;
   }
-  // 他のメッセージタイプがあればここに追加
-  return false; // このリスナーがこれ以上メッセージを処理しないことを示す
+  return false;
 });
 
-// --- ショートカットキーコマンドのリスナー ---
 chrome.commands.onCommand.addListener(async (command, tab) => {
   detailedLog(`コマンド「${command}」受信 (タブID: ${tab ? tab.id : "N/A"})`);
-
-  // manifest.json で定義したコマンド名と一致させる
   if (command === "translate_selection") {
-    // ← manifest.json で定義したコマンド名
+    // manifest.json のコマンド名
     if (tab && tab.id) {
       try {
+        // ★モデル名もストレージから取得するように変更
         const storageItems = await chrome.storage.local.get([
           "defaultTargetLanguage",
+          "selectedApiModel",
         ]);
-        const targetLang = storageItems.defaultTargetLanguage || "ja"; // デフォルトは日本語
+        const targetLang = storageItems.defaultTargetLanguage || "ja";
+        const modelNameFromStorage =
+          storageItems.selectedApiModel || "gemini-1.5-flash-latest"; // ★デフォルトモデル
 
         detailedLog(
-          `コンテンツスクリプト (${tab.id}) に getSelectionAndTranslate を送信 (コマンド経由)。 targetLang: ${targetLang}`
+          `コンテンツスクリプト (${tab.id}) に getSelectionAndTranslate を送信 (コマンド経由)。 targetLang: ${targetLang}, model: ${modelNameFromStorage}`
         );
+        // コンテンツスクリプトにはモデル名を渡す必要はない（翻訳依頼はバックグラウンドで行うため）
+        // ただし、もし翻訳処理自体をコンテンツスクリプトに指示する場合は渡す必要がある
         const responseFromContentScript = await chrome.tabs.sendMessage(
           tab.id,
           {
-            action: "getSelectionAndTranslate", // content.js がこのアクションをリッスンする
+            action: "getSelectionAndTranslate",
             targetLang: targetLang,
+            // modelName: modelNameFromStorage // ← content.jsがモデル情報を使うなら渡す
           }
         );
         detailedLog(
           "コンテンツスクリプトからの応答 (コマンド経由):",
           responseFromContentScript
         );
-        // コンテンツスクリプトからの応答に基づいて何か処理をする場合はここ
       } catch (error) {
         console.error(
           `コンテンツスクリプト (${tab.id}) へのメッセージ送信失敗 (コマンド経由):`,
@@ -71,13 +69,6 @@ chrome.commands.onCommand.addListener(async (command, tab) => {
           console.warn(
             "現在のタブではコンテンツスクリプトが実行されていないか、応答がありません。ページをリロードしてみてください。"
           );
-          // 必要であれば chrome.notifications API などでユーザーに通知
-          // chrome.notifications.create({
-          //   type: 'basic',
-          //   iconUrl: 'icons/icon48.png',
-          //   title: '翻訳エラー',
-          //   message: '現在のページでは翻訳を実行できませんでした。ページをリロードしてお試しください。'
-          // });
         }
       }
     } else {
@@ -86,14 +77,15 @@ chrome.commands.onCommand.addListener(async (command, tab) => {
   }
 });
 
-// --- 翻訳リクエスト処理関数 ---
 async function handleTranslateRequest(request, sender, sendResponse) {
   detailedLog("handleTranslateRequest 開始。リクエスト:", request);
   try {
     detailedLog("ローカルストレージから設定を読み込み開始...");
+    // ★モデル名もストレージから取得
     const items = await chrome.storage.local.get([
       "geminiApiKey",
       "defaultTargetLanguage",
+      "selectedApiModel",
     ]);
     detailedLog(
       "読み込んだ設定オブジェクト (items):",
@@ -102,23 +94,27 @@ async function handleTranslateRequest(request, sender, sendResponse) {
 
     const apiKey = items.geminiApiKey;
     detailedLog("--- APIキーチェック開始 ---");
-    detailedLog("typeof apiKey:", typeof apiKey);
-    detailedLog("apiKey の値:", apiKey); // ★ここが最も重要！
-    detailedLog("apiKey === undefined:", apiKey === undefined);
-    detailedLog("apiKey === null:", apiKey === null);
-    detailedLog("apiKey === '':", apiKey === "");
-    detailedLog("!apiKey の評価結果:", !apiKey);
+    detailedLog(
+      "typeof apiKey:",
+      typeof apiKey,
+      ", apiKey の値:",
+      apiKey,
+      ", !apiKey の評価結果:",
+      !apiKey
+    );
     detailedLog("--- APIキーチェック終了 ---");
 
     const textToTranslate = request.text;
-    // リクエストに targetLang があればそれを使用、なければデフォルト言語を使用
     const targetLanguage =
       request.targetLang || items.defaultTargetLanguage || "ja";
+    const modelName = items.selectedApiModel || "gemini-2.0-flash"; // ★保存されたモデル名を使用、なければデフォルト
     detailedLog(
       "翻訳対象テキスト:",
       textToTranslate,
       "翻訳先言語:",
-      targetLanguage
+      targetLanguage,
+      "使用モデル:",
+      modelName
     );
 
     if (!apiKey) {
@@ -129,13 +125,11 @@ async function handleTranslateRequest(request, sender, sendResponse) {
       return;
     }
 
-    detailedLog("APIキー確認OK、Gemini API呼び出し準備");
+    detailedLog(`APIキー確認OK、Gemini API呼び出し準備 (モデル: ${modelName})`);
     const genAI = new GoogleGenerativeAI(apiKey);
-    const modelName = "gemini-1.5-flash-latest"; // または "gemini-pro" など、利用したいモデル
     const model = genAI.getGenerativeModel({
-      model: modelName,
+      model: modelName, // ★動的に設定されたモデル名を使用
       safetySettings: [
-        // 必要に応じて調整
         {
           category: HarmCategory.HARM_CATEGORY_HARASSMENT,
           threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
@@ -153,11 +147,6 @@ async function handleTranslateRequest(request, sender, sendResponse) {
           threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
         },
       ],
-      generationConfig: {
-        // 必要に応じて設定
-        // temperature: 0.7,
-        // maxOutputTokens: 2048,
-      },
     });
 
     const prompt = `以下の「テキスト」を自然な「${targetLanguage}」に翻訳してください。翻訳されたテキストのみを返してください。\n\nテキスト：\n${textToTranslate}`;
@@ -179,22 +168,23 @@ async function handleTranslateRequest(request, sender, sendResponse) {
           );
         }
       }
-      const errorMsg = `翻訳リクエストがブロックされたか、レスポンスがありませんでした。理由: ${blockReason}, SafetyRatings: ${safetyRatingsInfo}`;
+      const errorMsg = `翻訳リクエストがブロックされたか、レスポンスがありませんでした (使用モデル: ${modelName})。理由: ${blockReason}, SafetyRatings: ${safetyRatingsInfo}`;
       console.error("バックグラウンド: " + errorMsg, result);
       sendResponse({ error: errorMsg });
       return;
     }
 
     const translatedText = generationResponse.text();
-    detailedLog("翻訳成功 (SDK):", translatedText);
+    detailedLog(`翻訳成功 (モデル: ${modelName}):`, translatedText);
     sendResponse({ translatedText: translatedText.trim() });
   } catch (error) {
     console.error("バックグラウンド: 翻訳処理中の包括的なエラー:", error);
-    let errorMessage = "翻訳処理中に予期せぬエラーが発生しました。";
+    let errorMessage = `翻訳処理中に予期せぬエラーが発生しました (使用モデル: ${
+      items.selectedApiModel || "デフォルト"
+    })。`;
     if (error.message) {
       errorMessage += ` ${error.message}`;
     }
-    // GoogleGenerativeAIError の場合、より詳細な情報が含まれることがある
     if (
       error.name === "GoogleGenerativeAIResponseError" ||
       (error.toString &&
@@ -206,23 +196,21 @@ async function handleTranslateRequest(request, sender, sendResponse) {
         error.stack,
         error
       );
-      errorMessage = `Gemini APIエラー: ${error.message}`;
+      errorMessage = `Gemini APIエラー (使用モデル: ${
+        items.selectedApiModel || "デフォルト"
+      }): ${error.message}`;
     }
     sendResponse({ error: errorMessage });
   }
 }
 
-// 拡張機能インストール時やアップデート時に、オプションページで初期設定を促す (任意)
 chrome.runtime.onInstalled.addListener(async (details) => {
   detailedLog("onInstalled イベント:", details);
   if (details.reason === "install") {
-    // 初回インストール時にオプションページを開く
-    // chrome.runtime.openOptionsPage();
-
-    // または、デフォルト設定を書き込む
     const items = await chrome.storage.local.get([
       "defaultTargetLanguage",
       "targetLanguagePopup",
+      "selectedApiModel",
     ]);
     if (!items.defaultTargetLanguage) {
       detailedLog("デフォルトの翻訳先言語を 'ja' に設定します。");
@@ -232,6 +220,12 @@ chrome.runtime.onInstalled.addListener(async (details) => {
       detailedLog("ポップアップの翻訳先言語を 'ja' に設定します。");
       chrome.storage.local.set({ targetLanguagePopup: "ja" });
     }
+    if (!items.selectedApiModel) {
+      // ★インストール時にデフォルトモデルを設定
+      detailedLog(
+        "デフォルトの使用APIモデルを 'gemini-1.5-flash-latest' に設定します。"
+      );
+      chrome.storage.local.set({ selectedApiModel: "gemini-1.5-flash-latest" });
+    }
   }
-  // アップデート時の処理などもここに追加可能
 });
