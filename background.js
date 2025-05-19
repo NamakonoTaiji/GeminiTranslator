@@ -19,7 +19,7 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
     // 非同期処理を即時実行の async 関数でラップ
     (async () => {
       try {
-        const items = await chrome.storage.sync.get([
+        const items = await chrome.storage.local.get([
           "geminiApiKey",
           "defaultTargetLanguage",
         ]);
@@ -38,11 +38,9 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
 
         const genAI = new GoogleGenerativeAI(apiKey);
 
-        // モデルを指定 (例: 'gemini-1.5-flash-latest', 'gemini-pro')
-        // ユーザーが提示した 'gemini-2.0-flash' は現時点で一般的なモデル名ではないため、
-        // 利用可能な最新モデルを確認してください。ここでは 'gemini-1.5-flash-latest' を使用します。
+        // モデルを指定
         const model = genAI.getGenerativeModel({
-          model: "gemini-1.5-flash-latest",
+          model: "gemini-2.0-flash",
           // セーフティセッティング (必要に応じて調整)
           safetySettings: [
             {

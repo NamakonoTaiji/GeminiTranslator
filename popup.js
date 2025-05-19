@@ -5,13 +5,13 @@ document.addEventListener("DOMContentLoaded", function () {
   const langStatusDiv = document.getElementById("langStatus");
 
   // 1. 保存されている翻訳先言語を読み込み、セレクトボックスに設定
-  chrome.storage.sync.get(["targetLanguagePopup"], function (result) {
+  chrome.storage.local.get(["targetLanguagePopup"], function (result) {
     if (result.targetLanguagePopup) {
       targetLangSelect.value = result.targetLanguagePopup;
     } else {
       // デフォルト値が設定されていない場合、最初のオプション（日本語）を設定
       targetLangSelect.value = "ja";
-      chrome.storage.sync.set({ targetLanguagePopup: "ja" }); // デフォルトを保存
+      chrome.storage.local.set({ targetLanguagePopup: "ja" }); // デフォルトを保存
     }
   });
 
@@ -84,7 +84,7 @@ document.addEventListener("DOMContentLoaded", function () {
   if (targetLangSelect) {
     targetLangSelect.addEventListener("change", function () {
       const newLang = this.value;
-      chrome.storage.sync.set({ targetLanguagePopup: newLang }, function () {
+      chrome.storage.local.set({ targetLanguagePopup: newLang }, function () {
         if (chrome.runtime.lastError) {
           console.error(
             "言語設定の保存エラー:",

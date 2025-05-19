@@ -7,7 +7,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // 保存されている設定値を読み込んでフォームに表示
   function restoreOptions() {
-    chrome.storage.sync.get(
+    chrome.storage.local.get(
       {
         geminiApiKey: "", // デフォルト値
         defaultTargetLanguage: "ja", // デフォルト値
@@ -24,7 +24,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const apiKey = apiKeyInput.value;
     const defaultTargetLang = defaultTargetLangSelect.value;
 
-    chrome.storage.sync.set(
+    chrome.storage.local.set(
       {
         geminiApiKey: apiKey,
         defaultTargetLanguage: defaultTargetLang,

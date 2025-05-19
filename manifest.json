@@ -32,8 +32,8 @@
     "commands": {
         "translate_selection": {
             "suggested_key": {
-                "default": "Ctrl+N",
-                "mac": "Ctrl+N"
+                "default": "Ctrl+Shift+E",
+                "mac": "Ctrl+Shift+E"
             },
             "description": "選択したテキストを翻訳します。"
         }

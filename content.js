@@ -142,42 +142,42 @@ function handleTranslationResponse(
   }
 }
 
-// 1. マウス操作でテキスト選択が完了した時に自動で取得・送信
-document.addEventListener("mouseup", function (event) {
-  // 翻訳ボックス自体の上や、入力要素の上でのmouseupは無視
-  if (
-    event.target.closest("#gemini-translator-inline-box") ||
-    event.target.matches('input, textarea, [contenteditable="true"]')
-  ) {
-    return;
-  }
+// // 1. マウス操作でテキスト選択が完了した時に自動で取得・送信
+// document.addEventListener("mouseup", function (event) {
+//   // 翻訳ボックス自体の上や、入力要素の上でのmouseupは無視
+//   if (
+//     event.target.closest("#gemini-translator-inline-box") ||
+//     event.target.matches('input, textarea, [contenteditable="true"]')
+//   ) {
+//     return;
+//   }
 
-  const selectedText = window.getSelection().toString().trim();
+//   const selectedText = window.getSelection().toString().trim();
 
-  if (selectedText.length > 0 && selectedText !== lastSelectedText) {
-    lastSelectedText = selectedText; // 同じテキストで連続翻訳しないように
-    console.log("テキスト選択 (mouseup):", selectedText);
+//   if (selectedText.length > 0 && selectedText !== lastSelectedText) {
+//     lastSelectedText = selectedText; // 同じテキストで連続翻訳しないように
+//     console.log("テキスト選択 (mouseup):", selectedText);
 
-    // バックグラウンドスクリプトに翻訳を依頼 (デフォルトの翻訳先言語はバックグラウンドで取得)
-    chrome.runtime.sendMessage(
-      {
-        action: "translate", // バックグラウンドの 'translate' アクションを呼び出す
-        text: selectedText,
-        // targetLang はバックグラウンドでオプション設定から取得させるか、ここで固定値を渡す
-      },
-      function (response) {
-        handleTranslationResponse(
-          response,
-          selectedText,
-          event.pageX,
-          event.pageY
-        );
-      }
-    );
-  } else if (selectedText.length === 0) {
-    lastSelectedText = ""; // 選択が解除されたらリセット
-  }
-});
+//     // バックグラウンドスクリプトに翻訳を依頼 (デフォルトの翻訳先言語はバックグラウンドで取得)
+//     chrome.runtime.sendMessage(
+//       {
+//         action: "translate", // バックグラウンドの 'translate' アクションを呼び出す
+//         text: selectedText,
+//         // targetLang はバックグラウンドでオプション設定から取得させるか、ここで固定値を渡す
+//       },
+//       function (response) {
+//         handleTranslationResponse(
+//           response,
+//           selectedText,
+//           event.pageX,
+//           event.pageY
+//         );
+//       }
+//     );
+//   } else if (selectedText.length === 0) {
+//     lastSelectedText = ""; // 選択が解除されたらリセット
+//   }
+// });
 
 // 2. ポップアップやショートカットキーからの指示で取得・送信
 chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
